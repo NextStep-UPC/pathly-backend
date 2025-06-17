@@ -12,9 +12,10 @@ using pathly_backend.IAM.Infrastructure.Security;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
 
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
+                               
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
@@ -50,10 +51,31 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Obtiene la de conexión de appsettings.json para el MySQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+// Registra el DbContext del bounded context IAM (sign-up y sign-in)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+// Ejemplo -> Crean un bounded context llamado "Ejemplo" usando:
+//
+// public class EjemploDbContext : DbContext
+// {
+//     public DbSet<Ejemplo> Ejemplo { get; set; }
+//     public EjemploDbContext(DbContextOptions<EjemploDbContext> options)
+//         : base(options) { }
+// }
+//
+// Y lo registran aquí exactamente igual:
+//builder.Services.AddDbContext<EjemploDbContext>(options =>
+//    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+//
+// Esto permitirá que tanto IAM como Ejemplo usen la misma base de datos
+// (se crearán sus tablas en paralelo dentro de "pathly_backend")
+//
+// Pueden fijarse como funciona mi "ApplicationDbContext.cs" en:
+// Infrastructure -> Persistence -> Context -> ApplicationDbContext.cs
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
@@ -89,10 +111,11 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
+// Aplica migraciones automáticamente al iniciar el proyecto
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    db.Database.Migrate(); // Crea la base de datos y tablas si no existen
 }
 
 if (app.Environment.IsDevelopment())
@@ -101,9 +124,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseHttpsRedirection(); 
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
+app.MapControllers();   
 
 app.Run();
