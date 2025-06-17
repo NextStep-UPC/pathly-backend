@@ -1,0 +1,41 @@
+## Build results
+bin/
+obj/
+out/
+
+## User-specific files
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+
+## OS-specific files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+## VS-specific folders
+.vs/
+
+## Rider
+.idea/
+*.sln.iml
+
+## Logs
+*.log
+
+## Environment secrets
+.env
+
+## EF Migrations snapshot
+*Migrations/*.csproj
+
+## Others
+*.db
+*.sqlite
+*.pdb
+*.swp
+*.bak
+*.tmp
