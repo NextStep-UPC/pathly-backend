@@ -1,4 +1,4 @@
-# Pathly Backend
+# Pathly Backend - Develop (Rama de testeo)
 
 Este es el backend de Pathly, construido con ASP.NET Core 8, Entity Framework Core y MySQL. Implementa autenticación JWT y está estructurado siguiendo DDD.
 
