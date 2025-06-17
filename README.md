@@ -22,7 +22,7 @@ Este es el backend de Pathly, construido con ASP.NET Core 8, Entity Framework Co
 ```
 bash
 git clone https://github.com/NextStep-UPC/pathly-backend.git
-cd pathly-backen
+cd pathly-backend
 ```
 
 ### 2. Configurar `appsettings.json`
