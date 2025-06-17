@@ -30,7 +30,7 @@ Desktop.ini
 .env
 
 ## EF Migrations snapshot
-*Migrations/*.csproj
+**/Migrations/
 
 ## Others
 *.db
