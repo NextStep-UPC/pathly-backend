@@ -20,6 +20,7 @@
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.5.0" />
+    <PackageReference Include="Humanizer" Version="2.14.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,7 +28,16 @@
     <Folder Include="IAM\Domain\Repositories\" />
     <Folder Include="IAM\Infrastructure\Persistence\Repositories\" />
     <Folder Include="IAM\Interfaces\ACL\" />
-    <Folder Include="Shared\" />
+    <Folder Include="VocationalTest\Application\Internal\QueryServices\" />
+    <Folder Include="VocationalTest\Domain\Model\Aggregates\" />
+    <Folder Include="VocationalTest\Domain\Model\Commands\" />
+    <Folder Include="VocationalTest\Domain\Model\Queries\" />
+    <Folder Include="VocationalTest\Domain\Model\ValueObjects\" />
+    <Folder Include="VocationalTest\Domain\Repositories\" />
+    <Folder Include="VocationalTest\Domain\Services\" />
+    <Folder Include="VocationalTest\Infrastructure\Persistence\EFC\Repositories\" />
+    <Folder Include="VocationalTest\Interfaces\REST\Resources\" />
+    <Folder Include="VocationalTest\Interfaces\REST\Transform\" />
   </ItemGroup>
 
 </Project>
