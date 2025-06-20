@@ -1,0 +1,6 @@
+@pathly_backend_HostAddress = http://localhost:5198
+
+GET {{pathly_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
