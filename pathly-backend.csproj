@@ -8,6 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MediatR" Version="11.1.0" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.3">
       <PrivateAssets>all</PrivateAssets>
@@ -26,7 +28,11 @@
     <Folder Include="IAM\Domain\Model\ValueObjects\" />
     <Folder Include="IAM\Domain\Repositories\" />
     <Folder Include="IAM\Infrastructure\Persistence\Repositories\" />
-    <Folder Include="IAM\Interfaces\ACL\" />
+    <Folder Include="IAM\Interfaces\ACL\Services\" />
+    <Folder Include="Psychologist\Application\Internal\Interfaces\" />
+    <Folder Include="Psychologist\Application\Internal\Services\" />
+    <Folder Include="Psychologist\Domain\Repositories\" />
+    <Folder Include="Psychologist\Infrastructure\" />
     <Folder Include="Shared\" />
   </ItemGroup>
 

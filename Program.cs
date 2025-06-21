@@ -1,18 +1,17 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-
+using MediatR;
 using pathly_backend.IAM.Infrastructure.Persistence.Context;
 using pathly_backend.IAM.Application.Internal.Interfaces;
 using pathly_backend.IAM.Application.Internal.Services;
 using pathly_backend.IAM.Infrastructure.Security;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
                                
@@ -77,8 +76,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Pueden fijarse como funciona mi "ApplicationDbContext.cs" en:
 // Infrastructure -> Persistence -> Context -> ApplicationDbContext.cs
 
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+
+builder.Services.AddScoped<pathly_backend.Psychologist.Domain.Services.SectionService>();
+builder.Services.AddScoped<pathly_backend.Psychologist.Domain.Services.UpdateSectionHandler>();
 
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("Jwt"));
@@ -108,6 +111,19 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key))
     };
 });
+
+builder.Services.AddMediatR(cfg => { }, 
+    typeof(pathly_backend.Psychologist.Domain.Model.Commands.CreateSectionCommand).Assembly,
+    typeof(pathly_backend.Psychologist.Domain.Model.Commands.UpdateSectionCommand).Assembly,
+    typeof(pathly_backend.Psychologist.Domain.Services.SectionService).Assembly
+);
+
+// preserve referencias puede ser eliminado sin problemas pero se ve mas bonito asi depende de ustedes
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+    });
 
 var app = builder.Build();
 

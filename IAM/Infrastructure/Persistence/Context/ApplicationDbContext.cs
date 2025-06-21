@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using pathly_backend.IAM.Domain.Model.Entities;
+using pathly_backend.Psychologist.Domain.Model.Entities;
 
 namespace pathly_backend.IAM.Infrastructure.Persistence.Context
 {
@@ -11,7 +12,11 @@ namespace pathly_backend.IAM.Infrastructure.Persistence.Context
         }
 
         public DbSet<User> Users { get; set; }
-
-        // Puedes agregar más DbSets en el futuro: Roles, Sessions, etc.
+        public DbSet<Student> Students { get; set; }
+        public DbSet<Section> Sections { get; set; }
+        
     }
+
+
 }
+ 
