@@ -23,6 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="CareerTest\Infrastructure\Persistence\" />
+    <Folder Include="CareerTest\Interfaces\Rest\" />
     <Folder Include="IAM\Domain\Model\ValueObjects\" />
     <Folder Include="IAM\Domain\Repositories\" />
     <Folder Include="IAM\Infrastructure\Persistence\Repositories\" />
