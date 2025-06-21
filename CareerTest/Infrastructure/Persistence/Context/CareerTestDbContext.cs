@@ -9,6 +9,25 @@ namespace pathly_backend.CareerTest.Infrastructure.Persistence.Context
 
         public DbSet<Question> Questions { get; set; }
         public DbSet<QuestionOption> QuestionOptions { get; set; }
-        // Add other DbSets as needed
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Question>(entity =>
+            {
+                entity.HasKey(q => q.QuestionId);
+                entity.Property(q => q.Text).IsRequired();
+
+                entity.HasMany(q => q.Options)
+                    .WithOne(o => o.Question)
+                    .HasForeignKey(o => o.QuestionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<QuestionOption>(entity =>
+            {
+                entity.HasKey(o => o.Id);
+                entity.Property(o => o.Text).IsRequired();
+            });
+        }
     }
 }

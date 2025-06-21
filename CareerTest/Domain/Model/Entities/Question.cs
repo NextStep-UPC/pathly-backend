@@ -2,7 +2,7 @@
 
 public class Question
 {
-    public int Id { get; set; }
+    public int QuestionId { get; set; }
     public string Text { get; set; } = null!;
-    public List<QuestionOption> Options { get; set; } = new();
+    public ICollection<QuestionOption> Options { get; set; } = new List<QuestionOption>();
 }

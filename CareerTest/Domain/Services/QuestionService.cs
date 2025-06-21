@@ -27,7 +27,7 @@ public class CreateQuestionHandler : IRequestHandler<CreateQuestionCommand, int>
 
         _context.Questions.Add(question);
         await _context.SaveChangesAsync(cancellationToken);
-        return question.Id;
+        return question.QuestionId;
     }
 }
 
@@ -44,16 +44,17 @@ public class UpdateQuestionHandler : IRequestHandler<UpdateQuestionCommand, bool
     {
         var question = await _context.Questions
             .Include(q => q.Options)
-            .FirstOrDefaultAsync(q => q.Id == request.Id, cancellationToken);
+            .FirstOrDefaultAsync(q => q.QuestionId == request.Id, cancellationToken);
 
         if (question == null)
             return false;
 
         question.Text = request.Text;
-        // Update options as needed (add/remove/update)
-        // For simplicity, clear and re-add
         question.Options.Clear();
-        question.Options.AddRange(request.Options.Select(o => new QuestionOption { Text = o.Text }));
+        foreach (var option in request.Options)
+        {
+            question.Options.Add(new QuestionOption { Text = option.Text });
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
         return true;
@@ -72,7 +73,7 @@ public class DeleteQuestionHandler : IRequestHandler<DeleteQuestionCommand, bool
     public async Task<bool> Handle(DeleteQuestionCommand request, CancellationToken cancellationToken)
     {
         var question = await _context.Questions
-            .FirstOrDefaultAsync(q => q.Id == request.Id, cancellationToken);
+            .FirstOrDefaultAsync(q => q.QuestionId == request.Id, cancellationToken);
 
         if (question == null)
             return false;
@@ -98,7 +99,7 @@ public class GetAllQuestionsHandler : IRequestHandler<GetAllQuestionsQuery, List
             .Include(q => q.Options)
             .Select(q => new QuestionDto
             {
-                Id = q.Id,
+                Id = q.QuestionId,
                 Text = q.Text,
                 Options = q.Options.Select(o => new QuestionOptionDto
                 {
@@ -123,14 +124,14 @@ public class GetQuestionByIdHandler : IRequestHandler<GetQuestionByIdQuery, Ques
     {
         var question = await _context.Questions
             .Include(q => q.Options)
-            .FirstOrDefaultAsync(q => q.Id == request.Id, cancellationToken);
+            .FirstOrDefaultAsync(q => q.QuestionId == request.Id, cancellationToken);
 
         if (question == null)
             return null;
 
         return new QuestionDto
         {
-            Id = question.Id,
+            Id = question.QuestionId,
             Text = question.Text,
             Options = question.Options.Select(o => new QuestionOptionDto
             {
