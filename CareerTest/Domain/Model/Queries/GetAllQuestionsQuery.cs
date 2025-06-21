@@ -6,4 +6,4 @@ namespace pathly_backend.CareerTest.Domain.Model.Queries;
 
 public class GetAllQuestionsQuery : IRequest<List<QuestionDto>>
 {
-}
+}   

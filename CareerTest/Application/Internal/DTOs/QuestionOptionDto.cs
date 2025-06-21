@@ -1,6 +1,5 @@
-﻿namespace pathly_backend.CareerTest.Application.Internal.DTOs;
-
-public class QuestionOptionDto
+﻿public class QuestionOptionDto
 {
-    public string Text { get; set; } = string.Empty;
+    public int Id { get; set; }
+    public string Text { get; set; } = null!;
 }
