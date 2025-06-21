@@ -20,11 +20,10 @@
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.5.0" />
+    <PackageReference Include="MediatR" Version="11.1.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="CareerTest\Infrastructure\Persistence\" />
-    <Folder Include="CareerTest\Interfaces\Rest\" />
     <Folder Include="IAM\Domain\Model\ValueObjects\" />
     <Folder Include="IAM\Domain\Repositories\" />
     <Folder Include="IAM\Infrastructure\Persistence\Repositories\" />
