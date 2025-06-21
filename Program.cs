@@ -3,19 +3,21 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-
+using MediatR;
 using pathly_backend.IAM.Infrastructure.Persistence.Context;
 using pathly_backend.IAM.Application.Internal.Interfaces;
 using pathly_backend.IAM.Application.Internal.Services;
 using pathly_backend.IAM.Infrastructure.Security;
+using pathly_backend.CareerTest.Infrastructure.Persistence.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+// Add this before builder.Build();
 
+builder.Services.AddMediatR(typeof(Program).Assembly);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
-                               
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
@@ -57,25 +59,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // Registra el DbContext del bounded context IAM (sign-up y sign-in)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
-
-// Ejemplo -> Crean un bounded context llamado "Ejemplo" usando:
-//
-// public class EjemploDbContext : DbContext
-// {
-//     public DbSet<Ejemplo> Ejemplo { get; set; }
-//     public EjemploDbContext(DbContextOptions<EjemploDbContext> options)
-//         : base(options) { }
-// }
-//
-// Y lo registran aquí exactamente igual:
-//builder.Services.AddDbContext<EjemploDbContext>(options =>
-//    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
-//
-// Esto permitirá que tanto IAM como Ejemplo usen la misma base de datos
-// (se crearán sus tablas en paralelo dentro de "pathly_backend")
-//
-// Pueden fijarse como funciona mi "ApplicationDbContext.cs" en:
-// Infrastructure -> Persistence -> Context -> ApplicationDbContext.cs
+// Registra el DbContext del bounded context CareerTest
+builder.Services.AddDbContext<CareerTestDbContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
@@ -116,6 +102,9 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.Migrate(); // Crea la base de datos y tablas si no existen
+
+    var careerTestDb = scope.ServiceProvider.GetRequiredService<CareerTestDbContext>();
+    careerTestDb.Database.Migrate(); // Crea las tablas de CareerTest si no existen
 }
 
 if (app.Environment.IsDevelopment())
@@ -124,9 +113,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection(); 
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();   
+app.MapControllers();
 
 app.Run();
