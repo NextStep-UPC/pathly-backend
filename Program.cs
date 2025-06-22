@@ -1,4 +1,6 @@
-﻿using IAM.Application.Services;
+﻿using Admin.Domain.Model.Queries;
+using Admin.Infrastructure.Persistence;
+using IAM.Application.Services;
 using IAM.Domain.Repositories;
 using IAM.Infrastructure;
 using IAM.Infrastructure.Persistence;
@@ -15,6 +17,14 @@ var cfg = builder.Configuration;
 builder.Services.AddDbContext<IamDbContext>(opt =>
     opt.UseMySql(cfg.GetConnectionString("Default"),
         ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
+
+builder.Services.AddScoped<GetUserStatsQuery>();
+builder.Services.AddScoped<GetSessionsQuery>();
+builder.Services.AddScoped<GetFeedbackQuery>();
+builder.Services.AddDbContext<AdminDbContext>(opt =>
+    opt.UseMySql(cfg.GetConnectionString("Default"),
+        ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
+
 
 builder.Services.AddScoped<IUserRepository, EfUserRepository>();
 builder.Services.AddScoped<AuthService>();
