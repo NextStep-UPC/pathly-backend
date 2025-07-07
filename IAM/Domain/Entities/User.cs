@@ -1,30 +1,51 @@
-﻿using IAM.Domain.Enums;
+﻿using pathly_backend.Shared.Common;
+using pathly_backend.IAM.Domain.Events;
+using pathly_backend.IAM.Domain.ValueObjects;
+using pathly_backend.IAM.Domain.Enums;
 
-namespace IAM.Domain.Entities;
+namespace pathly_backend.IAM.Domain.Entities;
 
-public class User
+public class User : IAggregateRoot
 {
-    public Guid Id { get; private set; } = Guid.NewGuid();
-    public string Email { get; private set; } = default!;
-    public string PasswordHash { get; private set; } = default!;
-    public string Name { get; private set; } = default!;
-    public string LastName { get; private set; } = default!;
-    public DateOnly BirthDate { get; private set; }
-    public string Phone { get; private set; } = default!;
+    private readonly List<IDomainEvent> _domainEvents = new();
+    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
+
+    public Guid Id { get; private set; }
+    public Email Email { get; private set; } = default!;
+    public PasswordHash PasswordHash { get; private set; } = default!;
+    public FullName? Name { get; private set; }
     public UserRole Role { get; private set; }
 
-    private User() { }
+    private User() { } // EF
 
-    public static User Create(string email, string plainPwd, string name,
-        string lastName, DateOnly birth, string phone, UserRole role) =>
-        new()
-        {
-            Email = email.ToLowerInvariant(),
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(plainPwd),
-            Name = name,
-            LastName = lastName,
-            BirthDate = birth,
-            Phone = phone,
-            Role = role
-        };
+    private User(Guid id, Email email, PasswordHash hash, FullName name)
+    {
+        Id = id;
+        Email = email;
+        PasswordHash = hash;
+        Name = name;
+        Role = UserRole.Student;
+
+        AddDomainEvent(new UserRegistered(Id, Email.Value));
+    }
+
+    public static User Register(string email, string password, string first, string last)
+        => new(Guid.NewGuid(),
+            Email.Create(email),
+            PasswordHash.FromPlainText(password),
+            FullName.Create(first, last));
+
+    public bool VerifyPassword(string plaintext) => PasswordHash.Verify(plaintext);
+
+    public void RequestPsychologistRole()
+        => AddDomainEvent(new RoleRequested(Id, UserRole.Psychologist.ToString()));
+
+    public void GrantRole(UserRole newRole)
+    {
+        Role = newRole;
+        AddDomainEvent(new RoleGranted(Id, newRole.ToString()));
+    }
+
+    private void AddDomainEvent(IDomainEvent evt) => _domainEvents.Add(evt);
+    public void ClearDomainEvents() => _domainEvents.Clear();
 }

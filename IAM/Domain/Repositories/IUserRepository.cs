@@ -1,10 +1,11 @@
-﻿using IAM.Domain.Entities;
+﻿using pathly_backend.IAM.Domain.Entities;
 
-namespace IAM.Domain.Repositories;
+namespace pathly_backend.IAM.Domain.Repositories;
 
 public interface IUserRepository
 {
-    Task<User?> GetByEmailAsync(string email);
-    Task AddAsync(User user);
-    Task<bool> EmailExistsAsync(string email);
+    Task AddAsync(User user);                    // ←  async
+    Task<User?> FindByEmailAsync(string email);
+    Task<bool>  ExistsAsync(string email);
+    Task<User?> FindByIdAsync(Guid id);
 }

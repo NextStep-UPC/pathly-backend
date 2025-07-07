@@ -1,38 +1,51 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using IAM.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using pathly_backend.IAM.Domain.Entities;
 
-namespace IAM.Infrastructure.Services;
+namespace pathly_backend.IAM.Infrastructure.Services;
 
-public class JwtTokenGenerator
+public interface IJwtTokenGenerator
 {
-    private readonly IConfiguration _cfg;
+    string GenerateToken(User user);
+}
 
-    public JwtTokenGenerator(IConfiguration cfg) => _cfg = cfg;
+public class JwtTokenGenerator : IJwtTokenGenerator
+{
+    private readonly string _key;
+    private readonly string _issuer;
+    private readonly string _audience;
+    private readonly int    _expiresMinutes;
 
-    public string Generate(User user)
+    public JwtTokenGenerator(IConfiguration cfg)
     {
-        var s = _cfg.GetSection("Jwt");
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(s["Key"]!));
-        var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        _key           = cfg["Jwt:Key"]                     ?? throw new InvalidOperationException("Jwt:Key missing");
+        _issuer        = cfg["Jwt:Issuer"]                  ?? "Pathly";
+        _audience      = cfg["Jwt:Audience"]                ?? _issuer;
+        _expiresMinutes = int.TryParse(cfg["Jwt:ExpiresMinutes"], out var m) ? m : 15;
+    }
+
+    public string GenerateToken(User user)
+    {
+        var creds  = new SigningCredentials(
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key)),
+            SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.Email),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email.Value),
             new Claim(ClaimTypes.Role, user.Role.ToString())
         };
 
         var token = new JwtSecurityToken(
-            issuer: s["Issuer"],
-            audience: s["Audience"],
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(double.Parse(s["ExpiresMinutes"]!)),
-            signingCredentials: cred);
+            issuer:     _issuer,
+            audience:   _audience,
+            claims:     claims,
+            expires:    DateTime.UtcNow.AddMinutes(_expiresMinutes),
+            signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }

@@ -1,99 +1,213 @@
-﻿using IAM.Application.Services;
-using IAM.Domain.Repositories;
-using IAM.Infrastructure;
-using IAM.Infrastructure.Persistence;
-using IAM.Infrastructure.Persistence.Repositories;
-using IAM.Infrastructure.Services;
+﻿using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
+
+using pathly_backend.Shared.Common;
+using pathly_backend.Shared.ErrorHandling;
+
+// IAM
+using pathly_backend.IAM.Domain.Entities;
+using pathly_backend.IAM.Domain.Enums;
+using pathly_backend.IAM.Application;
+using pathly_backend.IAM.Domain.Repositories;
+using pathly_backend.IAM.Infrastructure.Persistence;
+using pathly_backend.IAM.Infrastructure.Persistence.Repositories;
+using pathly_backend.IAM.Infrastructure.Services;
+
+// Profile
+using pathly_backend.Profile.Application;
+using pathly_backend.Profile.Domain.Repositories;
+using pathly_backend.Profile.Infrastructure.Persistence;
+using pathly_backend.Profile.Infrastructure.Repositories;
+
+// Sessions
+using pathly_backend.Sessions.Application;
+using pathly_backend.Sessions.Domain.Repositories;
+using pathly_backend.Sessions.Infrastructure.Persistence;
+using pathly_backend.Sessions.Infrastructure.Persistence.Repositories;
+using pathly_backend.Sessions.Interfaces.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
-var cfg = builder.Configuration;
+var cfg     = builder.Configuration;
 
+// ---------------------------------------------------------------------
+// 1. DbContexts
+// ---------------------------------------------------------------------
 builder.Services.AddDbContext<IamDbContext>(opt =>
     opt.UseMySql(cfg.GetConnectionString("Default"),
-        ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
+                 ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
 
-builder.Services.AddScoped<IUserRepository, EfUserRepository>();
+builder.Services.AddDbContext<ProfileDbContext>(opt =>
+    opt.UseMySql(cfg.GetConnectionString("Default"),
+                 ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
+
+builder.Services.AddDbContext<SessionsDbContext>(opt =>
+    opt.UseMySql(cfg.GetConnectionString("Default"),
+                 ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
+
+// ---------------------------------------------------------------------
+// 2. Repositorios y UnitOfWork
+// ---------------------------------------------------------------------
+builder.Services.AddScoped<IUserRepository,     EfUserRepository>();
+builder.Services.AddScoped<IProfileRepository,  EfProfileRepository>();
+builder.Services.AddScoped<ISessionRepository,  EfSessionRepository>();
+
+builder.Services.AddScoped<IUnitOfWork,
+    pathly_backend.IAM.Infrastructure.Persistence.UnitOfWork>();
+
+builder.Services.AddScoped<IProfileUnitOfWork,
+    pathly_backend.Profile.Infrastructure.Persistence.UnitOfWork>();
+
+builder.Services.AddScoped<pathly_backend.Sessions.Infrastructure.Persistence.UnitOfWork>();
+
+// ---------------------------------------------------------------------
+// 3. Servicios de aplicación
+// ---------------------------------------------------------------------
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<JwtTokenGenerator>();
+builder.Services.AddScoped<ProfileService>();
+builder.Services.AddScoped<SessionService>();
+builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
+// ---------------------------------------------------------------------
+// 4. SignalR
+// ---------------------------------------------------------------------
+builder.Services.AddSignalR();
+
+// ---------------------------------------------------------------------
+// 5. JWT
+// ---------------------------------------------------------------------
 var key = Encoding.UTF8.GetBytes(cfg["Jwt:Key"]!);
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
-        o.TokenValidationParameters = new()
+        o.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
+            ValidateIssuer           = true,
+            ValidIssuer              = cfg["Jwt:Issuer"],
+            ValidateAudience         = true,
+            ValidAudience            = cfg["Jwt:Audience"],
             ValidateIssuerSigningKey = true,
-            ValidIssuer = cfg["Jwt:Issuer"],
-            ValidAudience = cfg["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(key)
+            IssuerSigningKey         = new SymmetricSecurityKey(key),
+            ClockSkew                = TimeSpan.Zero
         };
 
         o.Events = new JwtBearerEvents
         {
-            OnChallenge = context =>
+            OnChallenge = ctx =>
             {
-                context.HandleResponse();
-                context.Response.StatusCode = 401;
-                context.Response.ContentType = "application/json";
-                return context.Response.WriteAsync("{\"message\":\"Token inválido o ausente.\"}");
+                ctx.HandleResponse();
+                ctx.Response.StatusCode  = 401;
+                ctx.Response.ContentType = "application/json";
+                return ctx.Response.WriteAsync("{\"message\":\"Token inválido o ausente.\"}");
             }
         };
     });
 
+// ---------------------------------------------------------------------
+// 6. Swagger
+// ---------------------------------------------------------------------
 builder.Services.AddEndpointsApiExplorer();
-
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "PATHY BACKEND", Version = "v1" });
+    options.SwaggerDoc("v1", new() { Title = "PATHLY BACKEND", Version = "v1" });
+    options.EnableAnnotations();
+    options.AddServer(new() { Url = "https://localhost:44345", Description = "Servidor local HTTPS" });
 
-    var jwtSecurityScheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    var jwtScheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
-        Scheme = "bearer",
+        Scheme       = "bearer",
         BearerFormat = "JWT",
-        Name = "Authorization",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Description = "Introduce tu token JWT. Ejemplo: Bearer {token}",
-
-        Reference = new Microsoft.OpenApi.Models.OpenApiReference
+        Name         = "Authorization",
+        In           = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type         = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Description  = "Introduce tu token JWT. Ejemplo: **Bearer &lt;token&gt;**",
+        Reference    = new()
         {
-            Id = JwtBearerDefaults.AuthenticationScheme,
+            Id   = JwtBearerDefaults.AuthenticationScheme,
             Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme
         }
     };
 
-    options.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
-
-    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
-        { jwtSecurityScheme, Array.Empty<string>() }
-    });
+    options.AddSecurityDefinition(jwtScheme.Reference.Id, jwtScheme);
+    options.AddSecurityRequirement(new() { { jwtScheme, Array.Empty<string>() } });
 });
 
+// ---------------------------------------------------------------------
+// 7. MVC + CORS
+// ---------------------------------------------------------------------
 builder.Services.AddControllers();
 builder.Services.AddCors(p => p.AddPolicy("Front",
     pb => pb.WithOrigins("http://localhost:5173")
             .AllowAnyHeader()
             .AllowAnyMethod()));
 
+// ---------------------------------------------------------------------
+// 8. Build app
+// ---------------------------------------------------------------------
 var app = builder.Build();
 
+// ---------------------------------------------------------------------
+// 9. Migraciones auto
+// ---------------------------------------------------------------------
 await using (var scope = app.Services.CreateAsyncScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<IamDbContext>();
-    await db.Database.MigrateAsync();
+    await scope.ServiceProvider.GetRequiredService<IamDbContext>().Database.MigrateAsync();
+    await scope.ServiceProvider.GetRequiredService<ProfileDbContext>().Database.MigrateAsync();
+    await scope.ServiceProvider.GetRequiredService<SessionsDbContext>().Database.MigrateAsync();
 }
+
+// ---------------------------------------------------------------------
+// 10. Seed de Administrador
+// ---------------------------------------------------------------------
+await SeedAdminAsync(app);
+
+// ---------------------------------------------------------------------
+// 11. Pipeline HTTP
+// ---------------------------------------------------------------------
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
 app.UseCors("Front");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
+
+// SignalR endpoint
+app.MapHub<SessionChatHub>("/hubs/sessionChat");
+
 app.Run();
+
+// =====================================================================
+//  Función local: SeedAdminAsync
+// =====================================================================
+async Task SeedAdminAsync(WebApplication app)
+{
+    using var scope = app.Services.CreateScope();
+    var repo = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+    var uow  = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+    const string adminEmail    = "admin@pathly.com";
+    const string adminPassword = "password!";
+
+    if (!await repo.ExistsAsync(adminEmail))
+    {
+        var admin = User.Register(
+            email:    adminEmail,
+            password: adminPassword,
+            first:    "Pathly",
+            last:     "Admin");
+
+        admin.GrantRole(UserRole.Admin);
+
+        await repo.AddAsync(admin);
+        await uow.SaveChangesAsync();
+
+        Console.WriteLine($"Admin sembrado: {adminEmail} / {adminPassword}");
+    }
+}

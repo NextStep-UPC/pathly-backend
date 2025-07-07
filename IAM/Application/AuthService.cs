@@ -1,47 +1,69 @@
-﻿using IAM.Application.Dto;
-using IAM.Domain.Entities;
-using IAM.Domain.Enums;
-using IAM.Domain.Repositories;
-using IAM.Infrastructure;
-using IAM.Infrastructure.Services;
+﻿using pathly_backend.IAM.Application.Dto;
+using pathly_backend.IAM.Domain.Entities;
+using pathly_backend.IAM.Domain.Repositories;
+using pathly_backend.IAM.Infrastructure.Services;
 
-namespace IAM.Application.Services;
+using pathly_backend.Profile.Domain.Repositories;
+using ProfileEntity = pathly_backend.Profile.Domain.Entities.Profile;
+
+using pathly_backend.Shared.Common;
+
+namespace pathly_backend.IAM.Application;
 
 public class AuthService
 {
-    private readonly IUserRepository _repo;
-    private readonly JwtTokenGenerator _jwt;
+    private readonly IUserRepository     _users;
+    private readonly IProfileRepository  _profiles;
+    private readonly IUnitOfWork         _iamUow;
+    private readonly IProfileUnitOfWork  _profileUow;
+    private readonly IJwtTokenGenerator  _jwt;
 
-    public AuthService(IUserRepository repo, JwtTokenGenerator jwt) =>
-        (_repo, _jwt) = (repo, jwt);
-
-    public async Task<AuthResponse> LoginAsync(AuthLoginRequest r)
+    public AuthService(
+        IUserRepository     users,
+        IProfileRepository  profiles,
+        IUnitOfWork         iamUow,
+        IProfileUnitOfWork  profileUow,
+        IJwtTokenGenerator  jwt)
     {
-        var user = await _repo.GetByEmailAsync(r.Email)
-                   ?? throw new InvalidOperationException("Credenciales inválidas");
-
-        if (!BCrypt.Net.BCrypt.Verify(r.Password, user.PasswordHash))
-            throw new InvalidOperationException("Credenciales inválidas");
-
-        return Build(user);
+        _users      = users;
+        _profiles   = profiles;
+        _iamUow     = iamUow;
+        _profileUow = profileUow;
+        _jwt        = jwt;
     }
 
-    public async Task<AuthResponse> RegisterAsync(AuthRegisterRequest r)
+    // ---------- Registro ----------
+    public async Task<AuthResultDto> RegisterAsync(RegisterRequestDto dto)
     {
-        if (r.Password != r.ConfirmPassword)
-            throw new InvalidOperationException("Las contraseñas no coinciden");
+        if (await _users.ExistsAsync(dto.Email))
+            throw new InvalidOperationException("Email already in use.");
 
-        if (await _repo.EmailExistsAsync(r.Email))
-            throw new InvalidOperationException("El correo ya existe");
+        var user = User.Register(dto.Email, dto.Password, dto.FirstName, dto.LastName);
 
-        var user = User.Create(
-            r.Email, r.Password, r.Name, r.LastName, r.BirthDate, r.Phone, UserRole.Normal);
+        await _users.AddAsync(user);
 
-        await _repo.AddAsync(user);
-        return Build(user);
+        var profile = new ProfileEntity(user.Id);
+        profile.Update(dto.FirstName, dto.LastName, null, null,
+            dto.BirthDate, dto.PhoneNumber);
+        await _profiles.AddAsync(profile);
+
+        await _iamUow.SaveChangesAsync();
+        await _profileUow.SaveChangesAsync();
+
+        var token = _jwt.GenerateToken(user);
+        return new AuthResultDto(user.Id, token);
     }
 
-    private AuthResponse Build(User u) =>
-        new(_jwt.Generate(u),
-            new UserDto(u.Id, u.Email, u.Name, u.LastName, u.Role.ToString()));
+    // ---------- Login ----------
+    public async Task<AuthResultDto> LoginAsync(LoginRequestDto dto)
+    {
+        var user = await _users.FindByEmailAsync(dto.Email)
+                   ?? throw new InvalidOperationException("Invalid credentials.");
+
+        if (!user.VerifyPassword(dto.Password))
+            throw new InvalidOperationException("Invalid credentials.");
+
+        var token = _jwt.GenerateToken(user);
+        return new AuthResultDto(user.Id, token);
+    }
 }

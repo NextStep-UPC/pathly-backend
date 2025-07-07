@@ -1,2 +1,2 @@
-﻿namespace IAM.Domain.Enums;
-public enum UserRole { Normal = 0, Psychologist = 1, Admin = 2 }
+﻿namespace pathly_backend.IAM.Domain.Enums;
+public enum UserRole { Student = 0, Psychologist = 1, Admin = 2 }

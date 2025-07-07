@@ -1,24 +1,24 @@
-﻿using IAM.Domain.Entities;
-using IAM.Domain.Repositories;
-using Microsoft.EntityFrameworkCore;
-using IAM.Infrastructure.Persistence;
+﻿using Microsoft.EntityFrameworkCore;
+using pathly_backend.IAM.Domain.Entities;
+using pathly_backend.IAM.Domain.Repositories;
+using pathly_backend.IAM.Infrastructure.Persistence;
 
-namespace IAM.Infrastructure.Persistence.Repositories;
+namespace pathly_backend.IAM.Infrastructure.Persistence.Repositories;
 
 public class EfUserRepository : IUserRepository
 {
-    private readonly IamDbContext _db;
-    public EfUserRepository(IamDbContext db) => _db = db;
+    private readonly IamDbContext _ctx;
+    public EfUserRepository(IamDbContext ctx) => _ctx = ctx;
 
-    public Task<User?> GetByEmailAsync(string email) =>
-        _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email.ToLower());
+    public async Task AddAsync(User user)           // ←  async versión
+        => await _ctx.Users.AddAsync(user);
 
-    public async Task AddAsync(User u)
-    {
-        _db.Users.Add(u);
-        await _db.SaveChangesAsync();
-    }
+    public Task<User?> FindByEmailAsync(string email)
+        => _ctx.Users.FirstOrDefaultAsync(u => u.Email.Value == email);
 
-    public Task<bool> EmailExistsAsync(string email) =>
-        _db.Users.AnyAsync(u => u.Email == email.ToLower());
+    public Task<bool> ExistsAsync(string email)
+        => _ctx.Users.AnyAsync(u => u.Email.Value == email);
+
+    public Task<User?> FindByIdAsync(Guid id)
+        => _ctx.Users.FindAsync(id).AsTask();
 }

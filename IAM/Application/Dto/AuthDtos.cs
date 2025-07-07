@@ -1,12 +1,12 @@
-﻿namespace IAM.Application.Dto;
-public record AuthLoginRequest(string Email, string Password);
-public record AuthRegisterRequest(
-    string Name,
-    string LastName,
+﻿namespace pathly_backend.IAM.Application.Dto;
+
+public record RegisterRequestDto(
+    string   Email,
+    string   Password,
+    string   FirstName,
+    string   LastName,
     DateOnly BirthDate,
-    string Phone,
-    string Email,
-    string Password,
-    string ConfirmPassword);
-public record AuthResponse(string Token, UserDto User);
-public record UserDto(Guid Id, string Email, string Name, string LastName, string Role);
+    string   PhoneNumber);
+
+public record LoginRequestDto(string Email, string Password);
+public record AuthResultDto(Guid UserId, string Token);
