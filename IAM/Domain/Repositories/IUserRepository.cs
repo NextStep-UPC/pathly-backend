@@ -8,4 +8,5 @@ public interface IUserRepository
     Task<User?> FindByEmailAsync(string email);
     Task<bool>  ExistsAsync(string email);
     Task<User?> FindByIdAsync(Guid id);
+    Task<IEnumerable<User>> ListByRoleAsync(string role);
 }

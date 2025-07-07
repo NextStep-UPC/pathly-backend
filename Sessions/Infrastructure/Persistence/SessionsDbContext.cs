@@ -14,8 +14,28 @@ public class SessionsDbContext : DbContext
         b.Entity<Session>(cfg =>
         {
             cfg.ToTable("Sessions");
+
             cfg.HasKey(s => s.Id);
-            cfg.Property(s => s.State).HasConversion<int>();
+
+            cfg.Property(s => s.StudentId)
+                .IsRequired();
+
+            cfg.Property(s => s.PsychologistId)
+                .IsRequired();
+
+            cfg.Property(s => s.StartsAtUtc)
+                .IsRequired();
+
+            cfg.Property(s => s.EndsAtUtc)
+                .IsRequired();
+
+            cfg.Property(s => s.State)
+                .HasConversion<int>()
+                .IsRequired();
+            
+            cfg.Property(s => s.CancelReason)
+                .HasColumnType("text")
+                .IsRequired(false);
         });
     }
 }

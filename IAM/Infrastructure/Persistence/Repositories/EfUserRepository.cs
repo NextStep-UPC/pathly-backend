@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using pathly_backend.IAM.Domain.Entities;
+using pathly_backend.IAM.Domain.Enums;
 using pathly_backend.IAM.Domain.Repositories;
 using pathly_backend.IAM.Infrastructure.Persistence;
 
@@ -21,4 +22,12 @@ public class EfUserRepository : IUserRepository
 
     public Task<User?> FindByIdAsync(Guid id)
         => _ctx.Users.FindAsync(id).AsTask();
+    public Task<IEnumerable<User>> ListByRoleAsync(string role)
+    {
+        var parsedRole = Enum.Parse<UserRole>(role, ignoreCase: true);
+
+        return Task.FromResult<IEnumerable<User>>(
+            _ctx.Users.Where(u => u.Role == parsedRole).AsEnumerable()
+        );
+    }
 }
