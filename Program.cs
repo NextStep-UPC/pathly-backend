@@ -59,7 +59,8 @@ builder.Services.AddScoped<IUnitOfWork,
 builder.Services.AddScoped<IProfileUnitOfWork,
     pathly_backend.Profile.Infrastructure.Persistence.UnitOfWork>();
 
-builder.Services.AddScoped<pathly_backend.Sessions.Infrastructure.Persistence.UnitOfWork>();
+builder.Services.AddScoped<ISessionsUnitOfWork,
+    pathly_backend.Sessions.Infrastructure.Persistence.UnitOfWork>();
 
 // ---------------------------------------------------------------------
 // 3. Servicios de aplicación
@@ -193,7 +194,7 @@ async Task SeedAdminAsync(WebApplication app)
     var uow  = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
     const string adminEmail    = "admin@pathly.com";
-    const string adminPassword = "password!";
+        const string adminPassword = "password!";
 
     if (!await repo.ExistsAsync(adminEmail))
     {

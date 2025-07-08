@@ -7,7 +7,8 @@ public class SessionsDbContext : DbContext
 {
     public DbSet<Session> Sessions => Set<Session>();
 
-    public SessionsDbContext(DbContextOptions<SessionsDbContext> o) : base(o) {}
+    public SessionsDbContext(DbContextOptions<SessionsDbContext> options)
+        : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -15,24 +16,23 @@ public class SessionsDbContext : DbContext
         {
             cfg.ToTable("Sessions");
 
-            cfg.HasKey(s => s.Id);
-
             cfg.Property(s => s.StudentId)
                 .IsRequired();
 
             cfg.Property(s => s.PsychologistId)
-                .IsRequired();
+                .IsRequired(false);
 
             cfg.Property(s => s.StartsAtUtc)
                 .IsRequired();
 
+            // ahora optional
             cfg.Property(s => s.EndsAtUtc)
-                .IsRequired();
+                .IsRequired(false);
 
             cfg.Property(s => s.State)
                 .HasConversion<int>()
                 .IsRequired();
-            
+
             cfg.Property(s => s.CancelReason)
                 .HasColumnType("text")
                 .IsRequired(false);

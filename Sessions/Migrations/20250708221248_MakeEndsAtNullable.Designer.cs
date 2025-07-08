@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using pathly_backend.Sessions.Infrastructure.Persistence;
 
@@ -10,9 +11,11 @@ using pathly_backend.Sessions.Infrastructure.Persistence;
 namespace pathly_backend.Sessions.Migrations
 {
     [DbContext(typeof(SessionsDbContext))]
-    partial class SessionsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250708221248_MakeEndsAtNullable")]
+    partial class MakeEndsAtNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

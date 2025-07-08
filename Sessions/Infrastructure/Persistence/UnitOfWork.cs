@@ -1,11 +1,8 @@
-﻿using pathly_backend.Shared.Common;
+﻿namespace pathly_backend.Sessions.Infrastructure.Persistence;
 
-namespace pathly_backend.Sessions.Infrastructure.Persistence;
-
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork : ISessionsUnitOfWork
 {
     private readonly SessionsDbContext _ctx;
     public UnitOfWork(SessionsDbContext ctx) => _ctx = ctx;
-    public Task<int> SaveChangesAsync(CancellationToken ct = default)
-        => _ctx.SaveChangesAsync(ct);
+    public Task<int> SaveChangesAsync(CancellationToken ct = default) => _ctx.SaveChangesAsync(ct);
 }
