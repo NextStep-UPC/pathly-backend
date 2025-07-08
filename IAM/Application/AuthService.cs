@@ -36,7 +36,7 @@ public class AuthService
     public async Task<AuthResultDto> RegisterAsync(RegisterRequestDto dto)
     {
         if (await _users.ExistsAsync(dto.Email))
-            throw new InvalidOperationException("Email already in use.");
+            throw new InvalidOperationException("Correo electrónico ya en uso.");
 
         var user = User.Register(dto.Email, dto.Password, dto.FirstName, dto.LastName);
 
@@ -58,10 +58,10 @@ public class AuthService
     public async Task<AuthResultDto> LoginAsync(LoginRequestDto dto)
     {
         var user = await _users.FindByEmailAsync(dto.Email)
-                   ?? throw new InvalidOperationException("Invalid credentials.");
+                   ?? throw new InvalidOperationException("Credenciales no válidas.");
 
         if (!user.VerifyPassword(dto.Password))
-            throw new InvalidOperationException("Invalid credentials.");
+            throw new InvalidOperationException("Credenciales no válidas.");
 
         var token = _jwt.GenerateToken(user);
         return new AuthResultDto(user.Id, token);

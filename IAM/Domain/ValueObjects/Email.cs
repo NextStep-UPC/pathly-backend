@@ -11,7 +11,7 @@ public sealed class Email
     public static Email Create(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
-            throw new ArgumentException("Email cannot be empty.", nameof(email));
+            throw new ArgumentException("El correo electrónico no puede estar vacío.", nameof(email));
 
         var normalized = email.Trim().ToLowerInvariant();
 
@@ -19,7 +19,7 @@ public sealed class Email
         {
             var addr = new System.Net.Mail.MailAddress(normalized);
             if (addr.Address != normalized)
-                throw new ArgumentException("Invalid email format.", nameof(email));
+                throw new ArgumentException("Formato de correo electrónico no válido.", nameof(email));
         }
         catch
         {

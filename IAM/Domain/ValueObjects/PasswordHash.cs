@@ -11,7 +11,7 @@ public sealed class PasswordHash
     public static PasswordHash FromPlainText(string plain)
     {
         if (string.IsNullOrWhiteSpace(plain) || plain.Length < 8)
-            throw new ArgumentException("Password must be at least 8 characters.", nameof(plain));
+            throw new ArgumentException("La contraseña debe tener al menos 8 caracteres.", nameof(plain));
 
         var hash = BCrypt.Net.BCrypt.HashPassword(plain);
         return new PasswordHash(hash);

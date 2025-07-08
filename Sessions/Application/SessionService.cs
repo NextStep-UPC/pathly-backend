@@ -46,7 +46,7 @@ public class SessionService
     public async Task<SessionResponseDto> CancelAsync(Guid sessionId, Guid userId, CancelSessionDto dto)
     {
         var s = await _repo.FindByIdAsync(sessionId)
-                ?? throw new KeyNotFoundException("Session not found");
+                ?? throw new KeyNotFoundException("Sesión no encontrada.");
         if (s.StudentId != userId)
             throw new UnauthorizedAccessException("Solo el estudiante puede cancelar la sesión");
         s.Cancel(dto.Reason);
@@ -57,7 +57,7 @@ public class SessionService
     public async Task<SessionResponseDto> FinishAsync(Guid sessionId, Guid psychologistId)
     {
         var s = await _repo.FindByIdAsync(sessionId)
-                ?? throw new KeyNotFoundException("Session not found");
+                ?? throw new KeyNotFoundException("Sesión no encontrada.");
         if (s.PsychologistId != psychologistId)
             throw new UnauthorizedAccessException("Solo el psicólogo asignado puede finalizar esta sesión.");
         s.Finish();

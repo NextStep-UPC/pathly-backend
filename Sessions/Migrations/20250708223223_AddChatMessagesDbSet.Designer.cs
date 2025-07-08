@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using pathly_backend.Sessions.Infrastructure.Persistence;
 
@@ -10,9 +11,11 @@ using pathly_backend.Sessions.Infrastructure.Persistence;
 namespace pathly_backend.Sessions.Migrations
 {
     [DbContext(typeof(SessionsDbContext))]
-    partial class SessionsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250708223223_AddChatMessagesDbSet")]
+    partial class AddChatMessagesDbSet
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -41,32 +44,6 @@ namespace pathly_backend.Sessions.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ChatMessages", (string)null);
-                });
-
-            modelBuilder.Entity("pathly_backend.Sessions.Domain.Entities.Feedback", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Comment")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("SessionId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("StudentId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Feedbacks", (string)null);
                 });
 
             modelBuilder.Entity("pathly_backend.Sessions.Domain.Entities.Session", b =>

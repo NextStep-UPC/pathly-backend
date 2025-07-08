@@ -64,10 +64,10 @@ public class ProfileController : ControllerBase
         [FromServices] IUserRepository userRepo)
     {
         var profile = await repo.FindByIdAsync(id)
-                      ?? throw new KeyNotFoundException("Profile not found");
+                      ?? throw new KeyNotFoundException("Perfil no encontrado.");
 
         var user = await userRepo.FindByIdAsync(id)
-                   ?? throw new KeyNotFoundException("User not found");
+                   ?? throw new KeyNotFoundException("Usuario no encontrado.");
 
         return Ok(new ProfileResponseDto(
             profile.UserId,

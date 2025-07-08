@@ -20,7 +20,7 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     [SwaggerOperation(
         Summary     = "Registro de nuevo usuario",
-        Description = "Crea un usuario con rol **Estudiante** por defecto y devuelve el JWT de acceso."
+        Description = "Crea un usuario con rol Estudiante por defecto y devuelve el JWT de acceso."
     )]
     [ProducesResponseType(typeof(AuthResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -41,7 +41,7 @@ public class AuthController : ControllerBase
     [HttpPost("roles/grant/{id:guid}")]
     [SwaggerOperation(
         Summary     = "Otorgar rol a un usuario",
-        Description = "Disponible solo para **Administradores**. Permite cambiar el rol del usuario (p. ej. de Estudiante a Psicólogo)."
+        Description = "Disponible solo para Administradores. Permite cambiar el rol del usuario (p. ej. de Estudiante a Psicólogo)."
     )]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -53,16 +53,21 @@ public class AuthController : ControllerBase
         [FromServices] IUnitOfWork uow)
     {
         var user = await repo.FindByIdAsync(id)
-                   ?? throw new KeyNotFoundException("User not found");
+                   ?? throw new KeyNotFoundException("Usuario no encontrado");
 
         user.GrantRole(role);
         await uow.SaveChangesAsync();
 
-        return Ok($"Role {role} successfully assigned to the user with ID {id}.");
+        return Ok($"El rol {role} ha sido asignado al ID: {id}.");
     }
+    
     
     [Authorize]
     [HttpGet("me")]
+    [SwaggerOperation(
+        Summary     = "Verificar el estado de tu cuenta",
+        Description = "Disponible para testeos y ver que toda la información se crea correctamente."
+    )]
     public async Task<ActionResult<UserInfoDto>> Me(
         [FromServices] IUserRepository repo)
     {

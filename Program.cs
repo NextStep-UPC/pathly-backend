@@ -23,6 +23,7 @@ using pathly_backend.Profile.Infrastructure.Repositories;
 
 // Sessions
 using pathly_backend.Sessions.Application;
+using pathly_backend.Sessions.Application.Interfaces;
 using pathly_backend.Sessions.Domain.Repositories;
 using pathly_backend.Sessions.Infrastructure.Persistence;
 using pathly_backend.Sessions.Infrastructure.Persistence.Repositories;
@@ -50,8 +51,15 @@ builder.Services.AddDbContext<SessionsDbContext>(opt =>
 // 2. Repositorios y UnitOfWork
 // ---------------------------------------------------------------------
 builder.Services.AddScoped<IUserRepository,     EfUserRepository>();
+
 builder.Services.AddScoped<IProfileRepository,  EfProfileRepository>();
+
 builder.Services.AddScoped<ISessionRepository,  EfSessionRepository>();
+builder.Services.AddScoped<IChatMessageRepository, EfChatMessageRepository>();
+builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IFeedbackRepository, EfFeedbackRepository>();
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+
 
 builder.Services.AddScoped<IUnitOfWork,
     pathly_backend.IAM.Infrastructure.Persistence.UnitOfWork>();
@@ -61,6 +69,7 @@ builder.Services.AddScoped<IProfileUnitOfWork,
 
 builder.Services.AddScoped<ISessionsUnitOfWork,
     pathly_backend.Sessions.Infrastructure.Persistence.UnitOfWork>();
+
 
 // ---------------------------------------------------------------------
 // 3. Servicios de aplicación

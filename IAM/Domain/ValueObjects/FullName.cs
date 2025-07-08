@@ -16,7 +16,7 @@ public sealed class FullName
     public static FullName Create(string first, string last)
     {
         if (string.IsNullOrWhiteSpace(first) || string.IsNullOrWhiteSpace(last))
-            throw new ArgumentException("Name parts cannot be empty.");
+            throw new ArgumentException("Los nombres no pueden estar vacios..");
 
         return new FullName(first.Trim(), last.Trim());
     }

@@ -24,7 +24,7 @@ public sealed class ExceptionHandlingMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception");
+            _logger.LogError(ex, "Excepción no controlada");
 
             context.Response.ContentType = "application/json";
 
@@ -33,7 +33,7 @@ public sealed class ExceptionHandlingMiddleware
                 ArgumentException => (StatusCodes.Status400BadRequest, ex.Message),
                 InvalidOperationException => (StatusCodes.Status400BadRequest, ex.Message),
                 KeyNotFoundException      => (StatusCodes.Status404NotFound,  ex.Message),
-                _ => (StatusCodes.Status500InternalServerError, "Unexpected error")
+                _ => (StatusCodes.Status500InternalServerError, "Error inesperado.")
             };
 
             context.Response.StatusCode = status;

@@ -4,8 +4,8 @@ public record ProfileResponseDto(
     Guid      UserId,
     string?   FirstName,
     string?   LastName,
-    DateOnly? BirthDate,      // ← NUEVO
-    string?   PhoneNumber,    // ← NUEVO
+    DateOnly? BirthDate,
+    string?   PhoneNumber,
     string?   Bio,
     string?   AvatarUrl,
     string    Role);

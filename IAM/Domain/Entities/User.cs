@@ -16,7 +16,7 @@ public class User : IAggregateRoot
     public FullName? Name { get; private set; }
     public UserRole Role { get; private set; }
 
-    private User() { } // EF
+    private User() { }
 
     private User(Guid id, Email email, PasswordHash hash, FullName name)
     {
