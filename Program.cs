@@ -31,6 +31,11 @@ using pathly_backend.Sessions.Domain.Repositories;
 using pathly_backend.Sessions.Infrastructure.Persistence;
 using pathly_backend.Sessions.Infrastructure.Persistence.Repositories;
 using pathly_backend.Sessions.Interfaces.SignalR;
+using pathly_backend.VocationalTests.Application;
+using pathly_backend.VocationalTests.Application.Interfaces;
+using pathly_backend.VocationalTests.Domain.Repositories;
+using pathly_backend.VocationalTests.Infrastructure.Persistence;
+using pathly_backend.VocationalTests.Infrastructure.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 var cfg     = builder.Configuration;
@@ -54,6 +59,10 @@ builder.Services.AddDbContext<SanctionsDbContext>(opt =>
     opt.UseMySql(cfg.GetConnectionString("Default"),
         ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
 
+builder.Services.AddDbContext<VocationalTestsDbContext>(opt =>
+    opt.UseMySql(cfg.GetConnectionString("Default"),
+        ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
+
 // ---------------------------------------------------------------------
 // 2. Repositorios y UnitOfWork
 // ---------------------------------------------------------------------
@@ -72,6 +81,17 @@ builder.Services.AddScoped<IReportService, ReportService>();
 
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
+builder.Services.AddScoped<ITestRepository, EfTestRepository>();
+builder.Services.AddScoped<IStudentTestRepository, EfStudentTestRepository>();
+builder.Services.AddScoped<IVocationalTestsUnitOfWork, VocationalTestsUnitOfWork>();
+builder.Services.AddScoped<ITestService, TestService>();
+builder.Services.AddScoped<IStudentTestService, StudentTestService>();
+
+builder.Services.AddScoped<ISanctionRepository, EfSanctionRepository>();
+builder.Services.AddScoped<ISanctionService, SanctionService>();
+builder.Services.AddScoped<IAppealRepository, EfAppealRepository>();
+builder.Services.AddScoped<IAppealService, AppealService>();
+
 builder.Services.AddScoped<IUnitOfWork, 
     pathly_backend.IAM.Infrastructure.Persistence.UnitOfWork>();
 builder.Services.AddScoped<IProfileUnitOfWork, 
@@ -89,11 +109,6 @@ builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<SessionService>();
 
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-
-builder.Services.AddScoped<ISanctionRepository, EfSanctionRepository>();
-builder.Services.AddScoped<ISanctionService, SanctionService>();
-builder.Services.AddScoped<IAppealRepository, EfAppealRepository>();
-builder.Services.AddScoped<IAppealService, AppealService>();
 
 // ---------------------------------------------------------------------
 // 4. SignalR
@@ -184,6 +199,7 @@ await using (var scope = app.Services.CreateAsyncScope())
     await scope.ServiceProvider.GetRequiredService<ProfileDbContext>().Database.MigrateAsync();
     await scope.ServiceProvider.GetRequiredService<SessionsDbContext>().Database.MigrateAsync();
     await scope.ServiceProvider.GetRequiredService<SanctionsDbContext>().Database.MigrateAsync();
+    await scope.ServiceProvider.GetRequiredService<VocationalTestsDbContext>().Database.MigrateAsync();
 }
 
 // ---------------------------------------------------------------------
@@ -203,7 +219,9 @@ app.UseCors("Front");
 
 app.UseAuthentication();
 
-// ─── Middleware de bloqueo global por sanciones ───────────────────────
+// ---------------------------------------------------------------------
+// 12. Middleware de bloqueo global por sanciones
+// ---------------------------------------------------------------------
 app.Use(async (HttpContext ctx, RequestDelegate next) =>
 {
     if (ctx.User?.Identity?.IsAuthenticated ?? false)
@@ -234,20 +252,18 @@ app.Use(async (HttpContext ctx, RequestDelegate next) =>
 
     await next(ctx);
 });
-// ───────────────────────────────────────────────────────────────────────
 
 app.UseAuthorization();
 
 app.MapControllers();
 
-// SignalR endpoint
 app.MapHub<SessionChatHub>("/hubs/sessionChat");
 
 app.Run();
 
-// =====================================================================
-//  Función local: SeedAdminAsync
-// =====================================================================
+// ---------------------------------------------------------------------
+// 13. Función local: SeedAdminAsync
+// ---------------------------------------------------------------------
 async Task SeedAdminAsync(WebApplication app)
 {
     using var scope = app.Services.CreateScope();
