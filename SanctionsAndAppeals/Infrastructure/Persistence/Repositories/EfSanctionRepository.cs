@@ -16,8 +16,17 @@ namespace pathly_backend.SanctionsAndAppeals.Infrastructure.Persistence.Reposito
         public Task AddAsync(Sanction sanction)
             => _ctx.Sanctions.AddAsync(sanction).AsTask();
 
-        public Task<Sanction?> FindActiveByUserAsync(Guid userId)
-            => _ctx.Sanctions.FirstOrDefaultAsync(s => s.UserId == userId && s.IsActive);
+        public async Task<Sanction?> FindActiveByUserAsync(Guid userId)
+        {
+            var now = DateTime.UtcNow;
+            return await _ctx.Sanctions
+                .Where(s =>
+                    s.UserId == userId &&
+                    s.StartAtUtc <= now &&
+                    (s.EndAtUtc == null || s.EndAtUtc >= now)
+                )
+                .FirstOrDefaultAsync();
+        }
 
         public IQueryable<Sanction> QueryAll()
             => _ctx.Sanctions;

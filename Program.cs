@@ -152,7 +152,6 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new() { Title = "PATHLY BACKEND", Version = "v1" });
     options.EnableAnnotations();
-    options.AddServer(new() { Url = "https://localhost:44345", Description = "Servidor local HTTPS" });
 
     var jwtScheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
