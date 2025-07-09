@@ -17,6 +17,11 @@ using pathly_backend.Profile.Application;
 using pathly_backend.Profile.Domain.Repositories;
 using pathly_backend.Profile.Infrastructure.Persistence;
 using pathly_backend.Profile.Infrastructure.Repositories;
+using pathly_backend.SanctionsAndAppeals.Application.Interfaces;
+using pathly_backend.SanctionsAndAppeals.Application.Services;
+using pathly_backend.SanctionsAndAppeals.Domain.Repositories;
+using pathly_backend.SanctionsAndAppeals.Infrastructure.Persistence;
+using pathly_backend.SanctionsAndAppeals.Infrastructure.Persistence.Repositories;
 using pathly_backend.Sessions.Application;
 using pathly_backend.Sessions.Application.Interfaces;
 using pathly_backend.Sessions.Domain.Repositories;
@@ -31,16 +36,20 @@ var cfg     = builder.Configuration;
 // 1. DbContexts
 // ---------------------------------------------------------------------
 builder.Services.AddDbContext<IamDbContext>(opt =>
-    opt.UseMySql(cfg.GetConnectionString("Default"),
-                 ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
+    opt.UseMySql(cfg.GetConnectionString("Default"), 
+        ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
 
 builder.Services.AddDbContext<ProfileDbContext>(opt =>
-    opt.UseMySql(cfg.GetConnectionString("Default"),
-                 ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
+    opt.UseMySql(cfg.GetConnectionString("Default"), 
+        ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
 
 builder.Services.AddDbContext<SessionsDbContext>(opt =>
-    opt.UseMySql(cfg.GetConnectionString("Default"),
-                 ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
+    opt.UseMySql(cfg.GetConnectionString("Default"), 
+        ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
+
+builder.Services.AddDbContext<SanctionsDbContext>(opt => 
+    opt.UseMySql(cfg.GetConnectionString("Default"), 
+        ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
 
 // ---------------------------------------------------------------------
 // 2. Repositorios y UnitOfWork
@@ -82,6 +91,11 @@ builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<SessionService>();
 
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+
+builder.Services.AddScoped<ISanctionRepository, EfSanctionRepository>();
+builder.Services.AddScoped<ISanctionService, SanctionService>();
+builder.Services.AddScoped<IAppealRepository, EfAppealRepository>();
+builder.Services.AddScoped<IAppealService, AppealService>();
 
 // ---------------------------------------------------------------------
 // 4. SignalR
