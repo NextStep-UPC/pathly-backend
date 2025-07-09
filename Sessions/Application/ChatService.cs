@@ -14,7 +14,7 @@ namespace pathly_backend.Sessions.Application;
 public class ChatService : IChatService
 {
     private readonly IChatMessageRepository _repo;
-    private readonly ISessionsUnitOfWork   _uow;
+    private readonly ISessionsUnitOfWork    _uow;
 
     public ChatService(IChatMessageRepository repo, ISessionsUnitOfWork uow)
     {

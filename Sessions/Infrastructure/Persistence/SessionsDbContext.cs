@@ -11,6 +11,7 @@ public class SessionsDbContext : DbContext
     public SessionsDbContext(DbContextOptions<SessionsDbContext> options)
         : base(options) { }
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Report> Reports => Set<Report>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -69,6 +70,24 @@ public class SessionsDbContext : DbContext
 
             cfg.Property(n => n.CreatedAtUtc)
                 .IsRequired();
+        });
+        
+        b.Entity<Report>(cfg =>
+        {
+            cfg.ToTable("Reports");
+            cfg.HasKey(r => r.Id);
+            cfg.Property(r => r.SessionId).IsRequired();
+            cfg.Property(r => r.PsychologistId).IsRequired();
+            cfg.Property(r => r.ReportedUserId).IsRequired();
+            cfg.Property(r => r.Reason)
+                .HasColumnType("text").IsRequired();
+            cfg.Property(r => r.CreatedAtUtc).IsRequired();
+            cfg.Property(r => r.State)
+                .HasConversion<int>().IsRequired();
+            cfg.Property(r => r.ResolvedByAdminId).IsRequired(false);
+            cfg.Property(r => r.AdminComment)
+                .HasColumnType("text").IsRequired(false);
+            cfg.Property(r => r.ResolvedAtUtc).IsRequired(false);
         });
     }
 }

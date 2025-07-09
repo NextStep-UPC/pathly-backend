@@ -13,7 +13,7 @@ namespace pathly_backend.Sessions.Application;
 public class NotificationService : INotificationService
 {
     private readonly INotificationRepository _repo;
-    private readonly ISessionsUnitOfWork    _uow;
+    private readonly ISessionsUnitOfWork     _uow;
 
     public NotificationService(
         INotificationRepository repo,

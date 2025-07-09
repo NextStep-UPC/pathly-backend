@@ -61,6 +61,8 @@ builder.Services.AddScoped<IFeedbackRepository, EfFeedbackRepository>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<INotificationRepository, EfNotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IReportRepository, EfReportRepository>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 builder.Services.AddScoped<IUnitOfWork,
     pathly_backend.IAM.Infrastructure.Persistence.UnitOfWork>();
@@ -76,8 +78,12 @@ builder.Services.AddScoped<ISessionsUnitOfWork,
 // 3. Servicios de aplicación
 // ---------------------------------------------------------------------
 builder.Services.AddScoped<AuthService>();
+
 builder.Services.AddScoped<ProfileService>();
+
+builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<SessionService>();
+
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
 // ---------------------------------------------------------------------
@@ -204,7 +210,7 @@ async Task SeedAdminAsync(WebApplication app)
     var uow  = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
     const string adminEmail    = "admin@pathly.com";
-        const string adminPassword = "password!";
+    const string adminPassword = "password!";
 
     if (!await repo.ExistsAsync(adminEmail))
     {
