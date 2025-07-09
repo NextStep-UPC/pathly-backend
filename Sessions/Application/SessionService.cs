@@ -16,11 +16,15 @@ using pathly_backend.Sessions.Infrastructure.Persistence;
 
 namespace pathly_backend.Sessions.Application
 {
+    /// <summary>
+    /// Servicio que aplica reglas de negocio para gestión de sesiones,
+    /// incluyendo límites de sesión activa y bloques de disponibilidad.
+    /// </summary>
     public class SessionService : ISessionService
     {
-        private readonly ISessionRepository   _repo;
-        private readonly ISessionsUnitOfWork  _uow;
-        private readonly IUserRepository      _users;
+        private readonly ISessionRepository _repo;
+        private readonly ISessionsUnitOfWork _uow;
+        private readonly IUserRepository _users;
         private readonly INotificationService _notifSvc;
 
         public SessionService(
@@ -29,80 +33,89 @@ namespace pathly_backend.Sessions.Application
             IUserRepository users,
             INotificationService notifSvc)
         {
-            _repo     = repo;
-            _uow      = uow;
-            _users    = users;
+            _repo = repo;
+            _uow = uow;
+            _users = users;
             _notifSvc = notifSvc;
         }
 
         public async Task<SessionResponseDto> BookAsync(Guid studentId, BookSessionDto dto)
         {
-            var s = new Session(studentId, dto.StartsAtUtc);
-            await _repo.AddAsync(s);
+            bool hasActive = await _repo.QueryMine(studentId)
+                .Where(s => s.StudentId == studentId && 
+                            (s.State == SessionState.Pending || s.State == SessionState.Confirmed))
+                .AnyAsync();
+            if (hasActive)
+                throw new InvalidOperationException("Ya tienes una sesión activa pendiente o confirmada.");
+
+            var session = new Session(studentId, dto.StartsAtUtc);
+            await _repo.AddAsync(session);
             await _uow.SaveChangesAsync();
-
-            if (s.PsychologistId.HasValue)
-            {
-                await _notifSvc.CreateAsync(new CreateNotificationDto(
-                    s.PsychologistId.Value,
-                    "Nueva reserva de sesión",
-                    $"Tienes una sesión reservada para {s.StartsAtUtc:yyyy-MM-dd HH:mm} UTC."
-                ));
-            }
-
-            return ToDto(s);
+            return ToDto(session);
         }
 
         public async Task<SessionResponseDto> AssignAsync(Guid sessionId, Guid psychologistId)
         {
-            var s = await _repo.FindByIdAsync(sessionId)
+            var session = await _repo.FindByIdAsync(sessionId)
                 ?? throw new KeyNotFoundException("Sesión no encontrada.");
-            s.AssignPsychologist(psychologistId);
+
+            if (session.State != SessionState.Pending)
+                throw new InvalidOperationException("Solo sesiones pendientes pueden asignarse.");
+
+            bool busy = await _repo.QueryAll()
+                .Where(s => s.PsychologistId == psychologistId && s.State == SessionState.Confirmed)
+                .AnyAsync();
+            if (busy)
+                throw new InvalidOperationException("Ya estás atendiendo otra sesión confirmada.");
+
+            session.AssignPsychologist(psychologistId);
             await _uow.SaveChangesAsync();
 
             await _notifSvc.CreateAsync(new CreateNotificationDto(
-                s.StudentId,
+                session.StudentId,
                 "Sesión confirmada",
-                $"Tu sesión del {s.StartsAtUtc:yyyy-MM-dd HH:mm} UTC ha sido confirmada."
+                $"Tu sesión del {session.StartsAtUtc:yyyy-MM-dd HH:mm} UTC ha sido confirmada."
             ));
 
-            return ToDto(s);
+            return ToDto(session);
         }
 
         public async Task<SessionResponseDto> CancelAsync(Guid sessionId, Guid userId, CancelSessionDto dto)
         {
-            var s = await _repo.FindByIdAsync(sessionId)
+            var session = await _repo.FindByIdAsync(sessionId)
                 ?? throw new KeyNotFoundException("Sesión no encontrada.");
-            if (s.StudentId != userId)
-                throw new UnauthorizedAccessException("Solo el estudiante puede cancelar la sesión.");
-            s.Cancel(dto.Reason);
+            if (session.StudentId != userId)
+                throw new UnauthorizedAccessException("Solo el estudiante puede cancelar esta sesión.");
+
+            session.Cancel(dto.Reason);
             await _uow.SaveChangesAsync();
 
             await _notifSvc.CreateAsync(new CreateNotificationDto(
-                s.StudentId,
+                session.StudentId,
                 "Sesión cancelada",
-                $"La sesión reservada para {s.StartsAtUtc:yyyy-MM-dd HH:mm} UTC ha sido cancelada."
+                $"La sesión reservada para {session.StartsAtUtc:yyyy-MM-dd HH:mm} UTC ha sido cancelada."
             ));
 
-            return ToDto(s);
+            return ToDto(session);
         }
 
         public async Task<SessionResponseDto> FinishAsync(Guid sessionId, Guid psychologistId)
         {
-            var s = await _repo.FindByIdAsync(sessionId)
+            var session = await _repo.FindByIdAsync(sessionId)
                 ?? throw new KeyNotFoundException("Sesión no encontrada.");
-            if (s.PsychologistId != psychologistId)
+            if (session.PsychologistId != psychologistId)
                 throw new UnauthorizedAccessException("Solo el psicólogo asignado puede finalizar esta sesión.");
-            s.Finish();
+
+            session.Finish();
             await _uow.SaveChangesAsync();
 
             await _notifSvc.CreateAsync(new CreateNotificationDto(
-                s.StudentId,
+                session.StudentId,
                 "Sesión finalizada",
-                $"La sesión que tuviste el {s.StartsAtUtc:yyyy-MM-dd HH:mm} UTC ha sido finalizada."
+                $"La sesión que tuviste el {session.StartsAtUtc:yyyy-MM-dd HH:mm} UTC ha sido finalizada."
             ));
 
-            return ToDto(s);
+            return ToDto(session);
         }
 
         public async Task<IEnumerable<SessionResponseDto>> ListMineAsync(Guid userId)
@@ -132,7 +145,7 @@ namespace pathly_backend.Sessions.Application
         }
 
         private static SessionResponseDto ToDto(Session s)
-            => new SessionResponseDto(
+            => new(
                 s.Id,
                 s.StudentId,
                 s.PsychologistId,
