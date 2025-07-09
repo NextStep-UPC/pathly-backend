@@ -2,11 +2,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-
+using pathly_backend.Analytics.Application;
+using pathly_backend.Analytics.Application.Interfaces;
 using pathly_backend.Shared.Common;
 using pathly_backend.Shared.ErrorHandling;
-
-// IAM
 using pathly_backend.IAM.Domain.Entities;
 using pathly_backend.IAM.Domain.Enums;
 using pathly_backend.IAM.Application;
@@ -14,14 +13,10 @@ using pathly_backend.IAM.Domain.Repositories;
 using pathly_backend.IAM.Infrastructure.Persistence;
 using pathly_backend.IAM.Infrastructure.Persistence.Repositories;
 using pathly_backend.IAM.Infrastructure.Services;
-
-// Profile
 using pathly_backend.Profile.Application;
 using pathly_backend.Profile.Domain.Repositories;
 using pathly_backend.Profile.Infrastructure.Persistence;
 using pathly_backend.Profile.Infrastructure.Repositories;
-
-// Sessions
 using pathly_backend.Sessions.Application;
 using pathly_backend.Sessions.Application.Interfaces;
 using pathly_backend.Sessions.Domain.Repositories;
@@ -63,6 +58,8 @@ builder.Services.AddScoped<INotificationRepository, EfNotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IReportRepository, EfReportRepository>();
 builder.Services.AddScoped<IReportService, ReportService>();
+
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
 builder.Services.AddScoped<IUnitOfWork,
     pathly_backend.IAM.Infrastructure.Persistence.UnitOfWork>();
