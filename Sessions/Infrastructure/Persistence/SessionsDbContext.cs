@@ -21,9 +21,11 @@ public class SessionsDbContext : DbContext
             cfg.Property(s => s.StudentId).IsRequired();
             cfg.Property(s => s.PsychologistId).IsRequired(false);
             cfg.Property(s => s.StartsAtUtc).IsRequired();
+            cfg.Property(s => s.AssignedAtUtc).IsRequired(false);
             cfg.Property(s => s.EndsAtUtc).IsRequired(false);
             cfg.Property(s => s.State).HasConversion<int>().IsRequired();
             cfg.Property(s => s.CancelReason).HasColumnType("text").IsRequired(false);
+            
         });
         
         b.Entity<ChatMessage>(cfg =>

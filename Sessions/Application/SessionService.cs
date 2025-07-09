@@ -16,10 +16,6 @@ using pathly_backend.Sessions.Infrastructure.Persistence;
 
 namespace pathly_backend.Sessions.Application
 {
-    /// <summary>
-    /// Servicio que aplica reglas de negocio para gestión de sesiones,
-    /// incluyendo límites de sesión activa y bloques de disponibilidad.
-    /// </summary>
     public class SessionService : ISessionService
     {
         private readonly ISessionRepository _repo;

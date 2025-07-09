@@ -9,11 +9,11 @@ public class Session : Entity
     public Guid     StudentId       { get; private set; }
     public Guid?    PsychologistId  { get; private set; }
     public DateTime StartsAtUtc     { get; private set; }
+    public DateTime? AssignedAtUtc { get; private set; }
     public DateTime? EndsAtUtc      { get; private set; }
     public SessionState State       { get; private set; }
     public string?  CancelReason    { get; private set; }
 
-    // Reserva: sólo studentId + StartsAtUtc
     public Session(Guid studentId, DateTime startsAtUtc)
     {
         Id            = Guid.NewGuid();
@@ -27,9 +27,9 @@ public class Session : Entity
         if (State != SessionState.Pending)
             throw new InvalidOperationException("Solo sesiones pendientes pueden ser tomadas.");
         PsychologistId = psychologistId;
-        State          = SessionState.Confirmed;
+        AssignedAtUtc = DateTime.UtcNow;
+        State = SessionState.Confirmed;
     }
-
     public void Cancel(string reason)
     {
         if (PsychologistId is not null)
