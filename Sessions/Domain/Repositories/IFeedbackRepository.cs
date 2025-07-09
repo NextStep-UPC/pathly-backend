@@ -8,5 +8,6 @@ namespace pathly_backend.Sessions.Domain.Repositories
     {
         Task AddAsync(Feedback feedback);
         IQueryable<Feedback> QueryBySession(Guid sessionId);
+        IQueryable<Feedback> QueryAll();
     }
 }

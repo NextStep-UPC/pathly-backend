@@ -59,7 +59,8 @@ builder.Services.AddScoped<IChatMessageRepository, EfChatMessageRepository>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IFeedbackRepository, EfFeedbackRepository>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
-
+builder.Services.AddScoped<INotificationRepository, EfNotificationRepository>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.AddScoped<IUnitOfWork,
     pathly_backend.IAM.Infrastructure.Persistence.UnitOfWork>();

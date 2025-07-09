@@ -20,5 +20,9 @@ namespace pathly_backend.Sessions.Infrastructure.Persistence.Repositories
             => _ctx.Set<Feedback>()
                 .Where(f => f.SessionId == sessionId)
                 .OrderBy(f => f.CreatedAtUtc);
+        
+        public IQueryable<Feedback> QueryAll()
+            => _ctx.Set<Feedback>()
+                .OrderBy(f => f.CreatedAtUtc);
     }
 }

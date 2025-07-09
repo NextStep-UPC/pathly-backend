@@ -51,5 +51,13 @@ namespace pathly_backend.Sessions.Application
                 new FeedbackDto(f.Id, f.SessionId, f.StudentId, f.Rating, f.Comment, f.CreatedAtUtc)
             );
         }
+        
+        public async Task<IEnumerable<FeedbackDto>> ListAllAsync()
+        {
+            var all = await Task.FromResult(_repo.QueryAll().ToList());
+            return all.Select(f =>
+                new FeedbackDto(f.Id, f.SessionId, f.StudentId, f.Rating, f.Comment, f.CreatedAtUtc)
+            );
+        }
     }
 }

@@ -7,11 +7,10 @@ public class SessionsDbContext : DbContext
 {
     public DbSet<Session>     Sessions     => Set<Session>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
-    
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
-
     public SessionsDbContext(DbContextOptions<SessionsDbContext> options)
         : base(options) { }
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -47,6 +46,29 @@ public class SessionsDbContext : DbContext
                 .HasColumnType("text")
                 .IsRequired(false);
             cfg.Property(f => f.CreatedAtUtc).IsRequired();
+        });
+        
+        b.Entity<Notification>(cfg =>
+        {
+            cfg.ToTable("Notifications");
+            cfg.HasKey(n => n.Id);
+
+            cfg.Property(n => n.UserId)
+                .IsRequired();
+
+            cfg.Property(n => n.Title)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            cfg.Property(n => n.Message)
+                .HasColumnType("text")
+                .IsRequired();
+
+            cfg.Property(n => n.IsRead)
+                .IsRequired();
+
+            cfg.Property(n => n.CreatedAtUtc)
+                .IsRequired();
         });
     }
 }

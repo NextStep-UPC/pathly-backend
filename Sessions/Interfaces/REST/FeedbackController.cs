@@ -43,4 +43,18 @@ public class FeedbackController : ControllerBase
         var list = await _svc.ListBySessionAsync(sessionId);
         return Ok(list);
     }
+    
+    // GET /api/feedbacks
+    [Authorize(Roles = "Admin")]
+    [HttpGet("/api/feedbacks")]
+    [SwaggerOperation(
+        Summary     = "Listar todos los feedback",
+        Description = "Devuelve todas las valoraciones de todas las sesiones."
+    )]
+    [SwaggerResponse(200, "Feedback listados", typeof(IEnumerable<FeedbackDto>))]
+    public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetAllFeedbacks()
+    {
+        var list = await _svc.ListAllAsync();
+        return Ok(list);
+    }
 }

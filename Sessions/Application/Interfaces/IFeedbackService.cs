@@ -9,5 +9,6 @@ namespace pathly_backend.Sessions.Application.Interfaces
     {
         Task<FeedbackDto> CreateAsync(Guid sessionId, Guid studentId, CreateFeedbackDto dto);
         Task<IEnumerable<FeedbackDto>> ListBySessionAsync(Guid sessionId);
+        Task<IEnumerable<FeedbackDto>> ListAllAsync();
     }
 }
