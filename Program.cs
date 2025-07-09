@@ -1,4 +1,7 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -22,8 +25,8 @@ using pathly_backend.SanctionsAndAppeals.Application.Services;
 using pathly_backend.SanctionsAndAppeals.Domain.Repositories;
 using pathly_backend.SanctionsAndAppeals.Infrastructure.Persistence;
 using pathly_backend.SanctionsAndAppeals.Infrastructure.Persistence.Repositories;
-using pathly_backend.Sessions.Application;
 using pathly_backend.Sessions.Application.Interfaces;
+using pathly_backend.Sessions.Application;
 using pathly_backend.Sessions.Domain.Repositories;
 using pathly_backend.Sessions.Infrastructure.Persistence;
 using pathly_backend.Sessions.Infrastructure.Persistence.Repositories;
@@ -36,29 +39,28 @@ var cfg     = builder.Configuration;
 // 1. DbContexts
 // ---------------------------------------------------------------------
 builder.Services.AddDbContext<IamDbContext>(opt =>
-    opt.UseMySql(cfg.GetConnectionString("Default"), 
+    opt.UseMySql(cfg.GetConnectionString("Default"),
         ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
 
 builder.Services.AddDbContext<ProfileDbContext>(opt =>
-    opt.UseMySql(cfg.GetConnectionString("Default"), 
+    opt.UseMySql(cfg.GetConnectionString("Default"),
         ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
 
 builder.Services.AddDbContext<SessionsDbContext>(opt =>
-    opt.UseMySql(cfg.GetConnectionString("Default"), 
+    opt.UseMySql(cfg.GetConnectionString("Default"),
         ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
 
-builder.Services.AddDbContext<SanctionsDbContext>(opt => 
-    opt.UseMySql(cfg.GetConnectionString("Default"), 
+builder.Services.AddDbContext<SanctionsDbContext>(opt =>
+    opt.UseMySql(cfg.GetConnectionString("Default"),
         ServerVersion.AutoDetect(cfg.GetConnectionString("Default"))));
 
 // ---------------------------------------------------------------------
 // 2. Repositorios y UnitOfWork
 // ---------------------------------------------------------------------
-builder.Services.AddScoped<IUserRepository,     EfUserRepository>();
+builder.Services.AddScoped<IUserRepository, EfUserRepository>();
+builder.Services.AddScoped<IProfileRepository, EfProfileRepository>();
 
-builder.Services.AddScoped<IProfileRepository,  EfProfileRepository>();
-
-builder.Services.AddScoped<ISessionRepository,  EfSessionRepository>();
+builder.Services.AddScoped<ISessionRepository, EfSessionRepository>();
 builder.Services.AddScoped<IChatMessageRepository, EfChatMessageRepository>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IFeedbackRepository, EfFeedbackRepository>();
@@ -70,21 +72,17 @@ builder.Services.AddScoped<IReportService, ReportService>();
 
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
-builder.Services.AddScoped<IUnitOfWork,
+builder.Services.AddScoped<IUnitOfWork, 
     pathly_backend.IAM.Infrastructure.Persistence.UnitOfWork>();
-
-builder.Services.AddScoped<IProfileUnitOfWork,
+builder.Services.AddScoped<IProfileUnitOfWork, 
     pathly_backend.Profile.Infrastructure.Persistence.UnitOfWork>();
-
-builder.Services.AddScoped<ISessionsUnitOfWork,
+builder.Services.AddScoped<ISessionsUnitOfWork, 
     pathly_backend.Sessions.Infrastructure.Persistence.UnitOfWork>();
-
 
 // ---------------------------------------------------------------------
 // 3. Servicios de aplicación
 // ---------------------------------------------------------------------
 builder.Services.AddScoped<AuthService>();
-
 builder.Services.AddScoped<ProfileService>();
 
 builder.Services.AddScoped<ISessionService, SessionService>();
@@ -106,7 +104,6 @@ builder.Services.AddSignalR();
 // 5. JWT
 // ---------------------------------------------------------------------
 var key = Encoding.UTF8.GetBytes(cfg["Jwt:Key"]!);
-
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
@@ -120,7 +117,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey         = new SymmetricSecurityKey(key),
             ClockSkew                = TimeSpan.Zero
         };
-
         o.Events = new JwtBearerEvents
         {
             OnChallenge = ctx =>
@@ -150,7 +146,7 @@ builder.Services.AddSwaggerGen(options =>
         Name         = "Authorization",
         In           = Microsoft.OpenApi.Models.ParameterLocation.Header,
         Type         = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Description  = "Introduce tu token JWT. Ejemplo: **Bearer &lt;token&gt;**",
+        Description  = "Introduce tu token JWT. Ejemplo: **Bearer <token>**",
         Reference    = new()
         {
             Id   = JwtBearerDefaults.AuthenticationScheme,
@@ -159,7 +155,10 @@ builder.Services.AddSwaggerGen(options =>
     };
 
     options.AddSecurityDefinition(jwtScheme.Reference.Id, jwtScheme);
-    options.AddSecurityRequirement(new() { { jwtScheme, Array.Empty<string>() } });
+    options.AddSecurityRequirement(new()
+    {
+        { jwtScheme, Array.Empty<string>() }
+    });
 });
 
 // ---------------------------------------------------------------------
@@ -184,6 +183,7 @@ await using (var scope = app.Services.CreateAsyncScope())
     await scope.ServiceProvider.GetRequiredService<IamDbContext>().Database.MigrateAsync();
     await scope.ServiceProvider.GetRequiredService<ProfileDbContext>().Database.MigrateAsync();
     await scope.ServiceProvider.GetRequiredService<SessionsDbContext>().Database.MigrateAsync();
+    await scope.ServiceProvider.GetRequiredService<SanctionsDbContext>().Database.MigrateAsync();
 }
 
 // ---------------------------------------------------------------------
@@ -202,6 +202,40 @@ app.UseSwaggerUI();
 app.UseCors("Front");
 
 app.UseAuthentication();
+
+// ─── Middleware de bloqueo global por sanciones ───────────────────────
+app.Use(async (HttpContext ctx, RequestDelegate next) =>
+{
+    if (ctx.User?.Identity?.IsAuthenticated ?? false)
+    {
+        var path = ctx.Request.Path.Value?.ToLowerInvariant() ?? "";
+        var isAllowedWhenBanned =
+            path.StartsWith("/api/sanctions/me") ||
+            (path.StartsWith("/api/sanctions/") && path.Contains("/appeal")) ||
+            path.StartsWith("/api/auth/logout");
+
+        if (!isAllowedWhenBanned)
+        {
+            var userId = Guid.Parse(ctx.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var ban    = await ctx.RequestServices
+                .GetRequiredService<ISanctionService>()
+                .GetActiveByUserAsync(userId);
+            if (ban != null && ban.IsActive)
+            {
+                ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await ctx.Response.WriteAsJsonAsync(new
+                {
+                    message = $"Estás sancionado hasta {ban.EndAtUtc?.ToString("u") ?? "permanente"} por: {ban.Reason}"
+                });
+                return;
+            }
+        }
+    }
+
+    await next(ctx);
+});
+// ───────────────────────────────────────────────────────────────────────
+
 app.UseAuthorization();
 
 app.MapControllers();
