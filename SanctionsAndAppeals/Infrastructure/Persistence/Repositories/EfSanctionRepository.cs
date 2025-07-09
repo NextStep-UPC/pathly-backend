@@ -1,10 +1,6 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using pathly_backend.SanctionsAndAppeals.Domain.Entities;
 using pathly_backend.SanctionsAndAppeals.Domain.Repositories;
-using pathly_backend.SanctionsAndAppeals.Infrastructure.Persistence;
 
 namespace pathly_backend.SanctionsAndAppeals.Infrastructure.Persistence.Repositories
 {
