@@ -179,10 +179,16 @@ builder.Services.AddSwaggerGen(options =>
 // 7. MVC + CORS
 // ---------------------------------------------------------------------
 builder.Services.AddControllers();
-builder.Services.AddCors(p => p.AddPolicy("Front",
-    pb => pb.WithOrigins("http://localhost:5173")
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Front", pb =>
+        pb.SetIsOriginAllowed(origin => 
+                new Uri(origin).Host == "localhost")
             .AllowAnyHeader()
-            .AllowAnyMethod()));
+            .AllowAnyMethod()
+            .AllowCredentials()
+    );
+});
 
 // ---------------------------------------------------------------------
 // 8. Build app
